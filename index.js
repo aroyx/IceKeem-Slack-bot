@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const { App } = require("@slack/bolt");
 const { default: axios } = require("axios");
 
@@ -9,15 +8,22 @@ const app = new App({
   socketMode: true
 });
 
-app.command("/icekeem-ping", async ({ command, ack, respond }) => {
+const ChannelID = 'C09CT01115K';
+const AnkushID = 'U079R9MBBC1';
+
+app.command("/icekeem-ping", async ({ command, client, ack, respond }) => {
   const start = Date.now();
 
   await ack();
 
   const args_str = command.text
+
   if (args_str === '') {
     const latency = Date.now() - start;
-    await respond({ text: `Ping: Pong! Latency: ${latency}ms` });
+    await client.chat.postMessage({
+      channel: ChannelID,
+      text: `<@${command.user_id}> Ping: Pong! Latency: ${latency}ms`
+    });
     return
   }
 
@@ -34,10 +40,13 @@ app.command("/icekeem-ping", async ({ command, ack, respond }) => {
     return
   }
 
-  setTimeout(() => { }, time)
+  await sleep(time)
 
   const latency = Date.now() - start;
-  await respond({ text: `Ping: Pong! Latency: ${latency}ms` });
+  await client.chat.postMessage({
+    channel: ChannelID,
+    text: `<@${command.user_id}> Ping: Pong! Latency: ${latency}ms`
+  });
 });
 
 app.command("/icekeem-blog", async ({ ack, respond }) => {
@@ -51,6 +60,7 @@ app.command("/icekeem-blog", async ({ ack, respond }) => {
         `Ankush's latest blog is *${response.data[0].meta.title}*
 *Desc*: ${response.data[0].meta.desc}
 *Date*: ${formatDate(response.data[0].meta.date)}
+*Link*: https://home.onkush.dev/${response.data[0].meta.path}
       `
     })
   } catch (err) {
@@ -59,6 +69,31 @@ app.command("/icekeem-blog", async ({ ack, respond }) => {
       text: `Failed to fetch latest blog!`
     })
   }
+});
+
+app.command("/icekeem-help", async ({ ack, respond }) => {
+  await ack()
+  await respond({
+    text:
+      ` Help for Ankush's bot *IceKeem*!
+\`/icekeem-help\` for this help
+\`/icekeem-ping\` to check life
+\`/icekeem-blog\` to fetch the latest bogus I published`
+  })
+});
+
+app.event("member_joined_channel", async ({ event, client }) => {
+  await client.chat.postMessage({
+    channel: ChannelID,
+    text: `Hello! <@${event.user}>! I hope you have a wonderful time in my yapping place! <@${AnkushID}> come greet them!`
+  });
+});
+
+app.event("member_left_channel", async ({ event, client }) => {
+  await client.chat.postMessage({
+    channel: AnkushID,
+    text: `Alas! Ankush, <@${event.user}> has left your channel :hs:, I hope you recover from this you deepshit. What did you do?`
+  });
 });
 
 (async () => {
@@ -83,3 +118,6 @@ function formatDate(dateStr) {
 
   return `${day}${daySuffix} ${month}, ${year}`;
 }
+
+// AI Made, I couldn't do it myself
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
