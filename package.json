@@ -1,0 +1,17 @@
+{
+  "name": "icekeem",
+  "version": "1.0.0",
+  "description": "A simple slack bot which helps out Ankush with his hackclub channel!",
+  "license": "MIT",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@slack/bolt": "^4.7.3",
+    "axios": "^1.17.0",
+    "dotenv": "^17.4.2"
+  }
+}
