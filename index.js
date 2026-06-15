@@ -8,11 +8,11 @@ const app = new App({
   socketMode: true
 });
 
-var ChannelID = 'C09CT01115K';
-const SChannelID = 'C0ALRF7MH5H'; // bot spam channel (privated)
+const ChannelID = 'C09CT01115K';
 const AnkushID = 'U079R9MBBC1';
 
-ChannelID = SChannelID;
+// const SChannelID = 'C0ALRF7MH5H'; // bot spam channel (privated)
+// ChannelID = SChannelID;
 
 app.command("/icekeem-ping", async ({ command, client, ack, respond }) => {
   const start = Date.now();
@@ -101,7 +101,7 @@ app.event("member_joined_channel", async ({ event, client }) => {
           {
             type: "button",
             style: "primary",
-            value: "ping_ankush",
+            value: event.user,
             action_id: "ping_ankush",
             text: {
               type: "plain_text",
@@ -121,12 +121,30 @@ app.event("member_left_channel", async ({ event, client }) => {
   });
 });
 
-app.action("ping_ankush", async ({ body, client, ack }) => {
+app.action("ping_ankush", async ({ body, client, ack, respond }) => {
   await ack();
+
+  const joinee = body.actions[0].value;
+  const presser = body.user.id;
+
+  if (joinee != presser) {
+    await client.chat.postMessage({
+      channel: ChannelID,
+      thread_ts: body.message.ts,
+      text: `Hey, <@${presser}>! You can't press this prestigious button :/ unfortunately this is reserved for <@${joinee}> who just joined. It is a special moment for them, let them have at it!\n\n> _PSss if you really want to press this button, leave and join again!_`
+    })
+    return;
+  }
+
+  await respond({
+    // don't ask me why 0 works.
+    text: `Hello! <@${joinee}>! I hope you have a wonderful time in my yapping place! Unfortunately the button can only be pressed once ;)`
+  })
 
   await client.chat.postMessage({
     channel: ChannelID,
-    text: `Hey <@${AnkushID}>! Come and greet this fella over here, <@${body.user.id}> wants you here!`
+    thread_ts: body.message.ts,
+    text: `Hey <@${AnkushID}>! Come and greet this fella over here, <@${presser}> wants you here! <@${joinee}> just joined!!`
   })
 });
 
