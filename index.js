@@ -8,8 +8,11 @@ const app = new App({
   socketMode: true
 });
 
-const ChannelID = 'C09CT01115K';
+var ChannelID = 'C09CT01115K';
+const SChannelID = 'C0ALRF7MH5H'; // bot spam channel (privated)
 const AnkushID = 'U079R9MBBC1';
+
+ChannelID = SChannelID;
 
 app.command("/icekeem-ping", async ({ command, client, ack, respond }) => {
   const start = Date.now();
@@ -20,10 +23,7 @@ app.command("/icekeem-ping", async ({ command, client, ack, respond }) => {
 
   if (args_str === '') {
     const latency = Date.now() - start;
-    await client.chat.postMessage({
-      channel: ChannelID,
-      text: `<@${command.user_id}> Ping: Pong! Latency: ${latency}ms`
-    });
+    await respond({ text: `Pong! Latency: ${latency}ms` });
     return
   }
 
@@ -43,24 +43,23 @@ app.command("/icekeem-ping", async ({ command, client, ack, respond }) => {
   await sleep(time)
 
   const latency = Date.now() - start;
-  await client.chat.postMessage({
-    channel: ChannelID,
-    text: `<@${command.user_id}> Ping: Pong! Latency: ${latency}ms`
-  });
+  await respond({ text: `Pong! Latency: ${latency}ms, slept for ${time}ms` });
 });
 
-app.command("/icekeem-blog", async ({ ack, respond }) => {
+app.command("/icekeem-blog", async ({ command, client, ack, respond }) => {
   await ack()
 
   try {
     const response = await axios.get("https://home.onkush.dev/api/blogs")
 
-    await respond({
+    await client.chat.postMessage({
+      channel: ChannelID,
       text:
-        `Ankush's latest blog is *${response.data[0].meta.title}*
+        `<@${command.user_id}> is looking for Ankush's latest blog.\n
+Ankush's latest blog is *${response.data[0].meta.title}*
 *Desc*: ${response.data[0].meta.desc}
 *Date*: ${formatDate(response.data[0].meta.date)}
-*Link*: https://home.onkush.dev/${response.data[0].meta.path}
+*Link*: https://home.onkush.dev${response.data[0].path}
       `
     })
   } catch (err) {
@@ -82,20 +81,56 @@ app.command("/icekeem-help", async ({ ack, respond }) => {
   })
 });
 
+// Events like ppl joined/left
 app.event("member_joined_channel", async ({ event, client }) => {
+  buttonClicker = event.user
   await client.chat.postMessage({
     channel: ChannelID,
-    text: `Hello! <@${event.user}>! I hope you have a wonderful time in my yapping place! <@${AnkushID}> come greet them!`
+    text: "this",
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `Hello! <@${event.user}>! I hope you have a wonderful time in my yapping place! Enjoy your place and have fun with this chonky button :)`
+        }
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            style: "primary",
+            value: "ping_ankush",
+            action_id: "ping_ankush",
+            text: {
+              type: "plain_text",
+              text: "Ping Ankush! <- DO IT!!"
+            }
+          },
+        ]
+      }
+    ]
   });
 });
 
 app.event("member_left_channel", async ({ event, client }) => {
   await client.chat.postMessage({
     channel: AnkushID,
-    text: `Alas! Ankush, <@${event.user}> has left your channel :hs:, I hope you recover from this you deepshit. What did you do?`
+    text: `Alas! Ankush, <@${event.user}> has left your channel (<#${event.channel}>) :hs:, I hope you recover from this you deepshit. What did you do? Text1`,
   });
 });
 
+app.action("ping_ankush", async ({ body, client, ack }) => {
+  await ack();
+
+  await client.chat.postMessage({
+    channel: ChannelID,
+    text: `Hey <@${AnkushID}>! Come and greet this fella over here, <@${body.user.id}> wants you here!`
+  })
+});
+
+// start the bot, now it listens to the events and shit
 (async () => {
   await app.start();
   console.log("bot is running!");
