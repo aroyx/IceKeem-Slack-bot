@@ -14,7 +14,7 @@ const AnkushID = 'U079R9MBBC1';
 // const SChannelID = 'C0ALRF7MH5H'; // bot spam channel (privated)
 // ChannelID = SChannelID;
 
-app.command("/icekeem-ping", async ({ command, client, ack, respond }) => {
+app.command("/icekeem-ping", async ({ command, ack, respond }) => {
   const start = Date.now();
 
   await ack();
@@ -52,15 +52,160 @@ app.command("/icekeem-blog", async ({ command, client, ack, respond }) => {
   try {
     const response = await axios.get("https://home.onkush.dev/api/blogs")
 
-    await client.chat.postMessage({
-      channel: ChannelID,
+    const first = response.data[0]
+    const second = response.data[1]
+    const third = response.data[2]
+
+    if (!first || !second || !third) {
+      throw new Error("shit");
+    }
+
+    await respond({
       text:
-        `<@${command.user_id}> is looking for Ankush's latest blog.\n
-Ankush's latest blog is *${response.data[0].meta.title}*
-*Desc*: ${response.data[0].meta.desc}
-*Date*: ${formatDate(response.data[0].meta.date)}
-*Link*: https://home.onkush.dev${response.data[0].path}
-      `
+        `
+Ankush's latest blog is *${first.meta.title}*
+*Desc*: ${first.meta.desc}
+*Date*: ${formatDate(first.meta.date)}
+*Link*: https://home.onkush.dev${first.path}
+      `,
+      // updated the default card/carousel in this page: https://app.slack.com/block-kit-builder/
+      blocks: [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "Since you are looking for Ankush's blogs, here are his latest 3 blogs!"
+          }
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "carousel",
+          "elements": [
+            {
+              "type": "card",
+              "block_id": "carousel-card-1",
+              "icon": {
+                "type": "image",
+                "image_url": "https://picsum.photos/36/36", // my blogs don't have icons, these dummy icons will do... it doesn't say anything but is fun
+                "alt_text": "A dummy Icon"
+              },
+              "title": {
+                "type": "mrkdwn",
+                "text": first.meta.title,
+                "verbatim": false
+              },
+              "subtitle": {
+                "type": "mrkdwn",
+                "text": first.meta.date,
+                "verbatim": false
+              },
+              "hero_image": {
+                "type": "image",
+                "image_url": `https://home.onkush.dev/blogs/${first.meta.img}`,
+                "alt_text": "Sample hero image"
+              },
+              "body": {
+                "type": "mrkdwn",
+                "text": first.meta.desc,
+                "verbatim": false
+              },
+              "actions": [
+                {
+                  "type": "button",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Read Blog!",
+                    "emoji": false
+                  },
+                  "url": `https://home.onkush.dev${first.path}`,
+                }
+              ]
+            },
+            {
+              "type": "card",
+              "block_id": "carousel-card-2",
+              "icon": {
+                "type": "image",
+                "image_url": "https://picsum.photos/38/38",
+                "alt_text": "Icon"
+              },
+              "title": {
+                "type": "mrkdwn",
+                "text": second.meta.title,
+                "verbatim": false
+              },
+              "subtitle": {
+                "type": "mrkdwn",
+                "text": second.meta.date,
+                "verbatim": false
+              },
+              "hero_image": {
+                "type": "image",
+                "image_url": `https://home.onkush.dev/blogs/${second.meta.img}`,
+                "alt_text": "Sample hero image"
+              },
+              "body": {
+                "type": "mrkdwn",
+                "text": second.meta.desc,
+                "verbatim": false
+              },
+              "actions": [
+                {
+                  "type": "button",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Read Blog!",
+                    "emoji": false
+                  },
+                  "url": `https://home.onkush.dev${second.path}`,
+                }
+              ]
+            },
+            {
+              "type": "card",
+              "block_id": "carousel-card-3",
+              "icon": {
+                "type": "image",
+                "image_url": "https://picsum.photos/40/40",
+                "alt_text": "Icon"
+              },
+              "title": {
+                "type": "mrkdwn",
+                "text": third.meta.title,
+                "verbatim": false
+              },
+              "subtitle": {
+                "type": "mrkdwn",
+                "text": third.meta.date,
+                "verbatim": false
+              },
+              "hero_image": {
+                "type": "image",
+                "image_url": `https://home.onkush.dev/blogs/${third.meta.img}`,
+                "alt_text": "Sample hero image"
+              },
+              "body": {
+                "type": "mrkdwn",
+                "text": third.meta.desc,
+                "verbatim": false
+              },
+              "actions": [
+                {
+                  "type": "button",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Read Blog!",
+                    "emoji": false
+                  },
+                  "url": `https://home.onkush.dev${third.path}`,
+                }
+              ]
+            },
+          ]
+        }
+      ]
     })
   } catch (err) {
     console.log("Blog fetch error:", err.message);
@@ -77,16 +222,17 @@ app.command("/icekeem-help", async ({ ack, respond }) => {
       ` Help for Ankush's bot *IceKeem*!
 \`/icekeem-help\` for this help
 \`/icekeem-ping\` to check life
-\`/icekeem-blog\` to fetch the latest bogus I published`
+\`/icekeem-blog\` to fetch the latest bogus I published`,
   })
 });
 
 // Events like ppl joined/left
 app.event("member_joined_channel", async ({ event, client }) => {
   buttonClicker = event.user
+
   await client.chat.postMessage({
     channel: ChannelID,
-    text: "this",
+    text: `Hello! <@${event.user}>! I hope you have a wonderful time in my yapping place! Enjoy your place and have fun with this chonky button :)`,
     blocks: [
       {
         type: "section",
@@ -128,9 +274,9 @@ app.action("ping_ankush", async ({ body, client, ack, respond }) => {
   const presser = body.user.id;
 
   if (joinee != presser) {
-    await client.chat.postMessage({
+    await client.chat.postEphemeral({
+      user: presser,
       channel: ChannelID,
-      thread_ts: body.message.ts,
       text: `Hey, <@${presser}>! You can't press this prestigious button :/ unfortunately this is reserved for <@${joinee}> who just joined. It is a special moment for them, let them have at it!\n\n> _PSss if you really want to press this button, leave and join again!_`
     })
     return;
@@ -144,7 +290,7 @@ app.action("ping_ankush", async ({ body, client, ack, respond }) => {
   await client.chat.postMessage({
     channel: ChannelID,
     thread_ts: body.message.ts,
-    text: `Hey <@${AnkushID}>! Come and greet this fella over here, <@${presser}> wants you here! <@${joinee}> just joined!!`
+    text: `Hey <@${AnkushID}>! Come and greet this fella over here, <@${joinee}> wants you here! <@${joinee}> just joined!!`
   })
 });
 
