@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const { App } = require("@slack/bolt");
 const { default: axios } = require("axios");
 
@@ -13,6 +14,10 @@ const AnkushID = 'U079R9MBBC1';
 
 // const SChannelID = 'C0ALRF7MH5H'; // bot spam channel (privated)
 // ChannelID = SChannelID;
+
+// ****************************************
+// ********* Icekeem Commands *************
+// ****************************************
 
 app.command("/icekeem-ping", async ({ command, ack, respond }) => {
   const start = Date.now();
@@ -108,7 +113,8 @@ Ankush's latest blog is *${first.meta.title}*
               },
               "body": {
                 "type": "mrkdwn",
-                "text": first.meta.desc,
+                "text": limitText200(`${first.meta.desc}\n\nTags: ${getTags(first.meta.tags)}`),
+                // "text": `${first.meta.desc}\n\nTags: ${getTags(first.meta.tags)}`,
                 "verbatim": false
               },
               "actions": [
@@ -148,7 +154,8 @@ Ankush's latest blog is *${first.meta.title}*
               },
               "body": {
                 "type": "mrkdwn",
-                "text": second.meta.desc,
+                "text": limitText200(`${second.meta.desc}\n\nTags: ${getTags(third.meta.tags)}`),
+                // "text": `${second.meta.desc}\n\nTags: ${getTags(third.meta.tags)}`,
                 "verbatim": false
               },
               "actions": [
@@ -188,7 +195,8 @@ Ankush's latest blog is *${first.meta.title}*
               },
               "body": {
                 "type": "mrkdwn",
-                "text": third.meta.desc,
+                "text": limitText200(`${third.meta.desc}\n\nTags: ${getTags(third.meta.tags)}`),
+                // "text": `${third.meta.desc}\n\nTags: ${getTags(third.meta.tags)}`,
                 "verbatim": false
               },
               "actions": [
@@ -225,6 +233,10 @@ app.command("/icekeem-help", async ({ ack, respond }) => {
 \`/icekeem-blog\` to fetch the latest bogus I published`,
   })
 });
+
+// ****************************************
+// ********* Icekeem Events ***************
+// ****************************************
 
 // Events like ppl joined/left
 app.event("member_joined_channel", async ({ event, client }) => {
@@ -263,7 +275,7 @@ app.event("member_joined_channel", async ({ event, client }) => {
 app.event("member_left_channel", async ({ event, client }) => {
   await client.chat.postMessage({
     channel: AnkushID,
-    text: `Alas! Ankush, <@${event.user}> has left your channel (<#${event.channel}>) :hs:, I hope you recover from this you deepshit. What did you do? Text1`,
+    text: `Alas! Ankush, <@${event.user}> has left your channel (<#${event.channel}>) :hs:, I hope you recover from this you deepshit. What did you do?`,
   });
 });
 
@@ -294,6 +306,231 @@ app.action("ping_ankush", async ({ body, client, ack, respond }) => {
   })
 });
 
+app.event("app_home_opened", async ({ client, event }) => {
+  try {
+    const response = await axios.get("https://home.onkush.dev/api/blogs")
+
+    const first = response.data[0]
+    const second = response.data[1]
+    const third = response.data[2]
+
+    if (!first || !second || !third) {
+      throw new Error("shit");
+    }
+
+    await client.views.publish({
+      user_id: event.user,
+
+      view: {
+        type: "home",
+        blocks: [
+          // { // these images don't work. IDK why
+          //   "type": "image",
+          //   "image_url": "https://github.com/aroyx/aroyx/blob/main/profile/stats.svg",
+          //   "alt_text": "Ankush's github stats"
+          // },
+          // {
+          //   "type": "image",
+          //   "image_url": "https://github-readme-stats.hackclub.dev/api/wakatime?username=12314&api_domain=hackatime.hackclub.com&theme=darcula&custom_title=Hackatime+Stats&layout=compact&cache_seconds=0&langs_count=8",
+          //   "alt_text": "Ankush's hackatime stats"
+          // },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `This bot was made to help me (<@${AnkushID}>) out with my channel! If you want you may want to join my channel (<#${ChannelID}>) using the button below!`
+            }
+          },
+          {
+            "type": "actions",
+            "elements": [
+              {
+                "type": "button",
+                "style": "primary",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Join Ankush's Channel!",
+                  "emoji": true
+                },
+                "value": event.user,
+                "action_id": "join_ankush_channel_from_home"
+              }
+            ]
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "Here are Ankush's blogs, some of them are really well written while others are there for testing purposes ;)"
+            }
+          },
+          {
+            "type": "carousel",
+            "elements": [
+              {
+                "type": "card",
+                "block_id": "carousel-card-1",
+                "icon": {
+                  "type": "image",
+                  "image_url": "https://picsum.photos/36/36", // my blogs don't have icons, these dummy icons will do... it doesn't say anything but is fun
+                  "alt_text": "A dummy Icon"
+                },
+                "title": {
+                  "type": "mrkdwn",
+                  "text": first.meta.title,
+                  "verbatim": false
+                },
+                "subtitle": {
+                  "type": "mrkdwn",
+                  "text": first.meta.date,
+                  "verbatim": false
+                },
+                "hero_image": {
+                  "type": "image",
+                  "image_url": `https://home.onkush.dev/blogs/${first.meta.img}`,
+                  "alt_text": "Sample hero image"
+                },
+                "body": {
+                  "type": "mrkdwn",
+                  "text": limitText200(`${first.meta.desc}\n\nTags: ${getTags(first.meta.tags)}`),
+                  "verbatim": false
+                },
+                "actions": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Read Blog!",
+                      "emoji": false
+                    },
+                    "url": `https://home.onkush.dev${first.path}`,
+                  }
+                ]
+              },
+              {
+                "type": "card",
+                "block_id": "carousel-card-2",
+                "icon": {
+                  "type": "image",
+                  "image_url": "https://picsum.photos/38/38",
+                  "alt_text": "Icon"
+                },
+                "title": {
+                  "type": "mrkdwn",
+                  "text": second.meta.title,
+                  "verbatim": false
+                },
+                "subtitle": {
+                  "type": "mrkdwn",
+                  "text": second.meta.date,
+                  "verbatim": false
+                },
+                "hero_image": {
+                  "type": "image",
+                  "image_url": `https://home.onkush.dev/blogs/${second.meta.img}`,
+                  "alt_text": "Sample hero image"
+                },
+                "body": {
+                  "type": "mrkdwn",
+                  "text": limitText200(`${second.meta.desc}\n\nTags: ${getTags(second.meta.tags)}`),
+                  "verbatim": false
+                },
+                "actions": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Read Blog!",
+                      "emoji": false
+                    },
+                    "url": `https://home.onkush.dev${second.path}`,
+                  }
+                ]
+              },
+              {
+                "type": "card",
+                "block_id": "carousel-card-3",
+                "icon": {
+                  "type": "image",
+                  "image_url": "https://picsum.photos/40/40",
+                  "alt_text": "Icon"
+                },
+                "title": {
+                  "type": "mrkdwn",
+                  "text": third.meta.title,
+                  "verbatim": false
+                },
+                "subtitle": {
+                  "type": "mrkdwn",
+                  "text": third.meta.date,
+                  "verbatim": false
+                },
+                "hero_image": {
+                  "type": "image",
+                  "image_url": `https://home.onkush.dev/blogs/${third.meta.img}`,
+                  "alt_text": "Sample hero image"
+                },
+                "body": {
+                  "type": "mrkdwn",
+                  "text": limitText200(`${third.meta.desc}\n\nTags: ${getTags(third.meta.tags)}`),
+                  "verbatim": false
+                },
+                "actions": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Read Blog!",
+                      "emoji": false
+                    },
+                    "url": `https://home.onkush.dev${third.path}`,
+                  }
+                ]
+              },
+            ]
+          }
+        ]
+      }
+    })
+  } catch (err) {
+    console.log("Can'd do home page: ", err.message)
+  }
+});
+
+app.action("join_ankush_channel_from_home", async ({ body, client, ack, respond }) => {
+  await ack();
+
+  const presser = body.user.id;
+
+  try {
+    await client.conversations.invite({
+      channel: ChannelID,
+      users: presser,
+    })
+  } catch (err) {
+    if (err.data && err.data.error === "already_in_channel") {
+      await client.chat.postMessage({
+        channel: presser,
+        text: `Unable to join <@${AnkushID}>'s channel <#${ChannelID}>! You are already a member of the same!!`
+      })
+    } else console.log("Unable to add user to channel, ", err.message)
+
+    return
+  }
+
+  await client.chat.postMessage({
+    channel: presser,
+    text: `You have successfully been added to <@${AnkushID}>'s channel <#${ChannelID}>! By...oh it was your own decision! Congrats! I hope you have a good time in my channel!`
+  })
+});
+
+// ****************************************
+// ********* Icekeem Helpers **************
+// ****************************************
+
 // start the bot, now it listens to the events and shit
 (async () => {
   await app.start();
@@ -317,6 +554,22 @@ function formatDate(dateStr) {
 
   return `${day}${daySuffix} ${month}, ${year}`;
 }
+
+function getTags(tags) {
+  var str = ""
+
+  for (const tag of tags) {
+    str += `\`${tag}\`, `
+  }
+
+  return str
+}
+
+function limitText200(string) {
+  if (string.length <= 200) return string
+  return string.substring(0, 200 - 4) + "..."
+}
+
 
 // AI Made, I couldn't do it myself
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
