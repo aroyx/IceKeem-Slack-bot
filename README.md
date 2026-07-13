@@ -12,6 +12,12 @@ Icekeem has 3 command now!
 `/icekeem-ping` to check life of the bot <br>
 `/icekeem-blog` to fetch the latest bogus I published! (Highly recommend xD) <br>
 
+You can ping Icekeem bot and ask it questions too!
+
+`@IceKeem do you like icecreams?`
+
+There are some predetermined responses, or else it uses the free tier of `Google Gemeni Flash 3.1`
+
 There may be bugs and I will fix them if I encounter them. Until then bye!
 
 ## AI Usage
