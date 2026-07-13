@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const { App } = require("@slack/bolt");
 const { default: axios } = require("axios");
+const { GoogleGenAI } = require("@google/genai");
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -11,6 +12,27 @@ const app = new App({
 
 const ChannelID = 'C09CT01115K';
 const AnkushID = 'U079R9MBBC1';
+const BotId = 'U0BBA98N13J';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const model = "gemini-3.1-flash-lite"
+const preText = `You are a slack bot named 'IceKeem' that helps Ankush (with slack id = ${AnkushID}) with his
+yapping channel in Hackclub's slack #ankush-loves-icecream (the name changes
+frequently) with channelid = ${ChannelID}, you are supposed to be nice and fun
+with the people and use some hackclub specific emojis sometimes like :heavysob:
+<- I use this a lot, :pf: <- crying thumbs up, :skulk: <- skull but better,
+:prayge: <- pray but better, :noooo:, :evilrondo:, :ultrafastparrot:, :cwy:,
+:hii:, :3c:, :3kcursed:, :icant:, :loll:, :thonk:, :thinkies:. Don't get carried
+away by the emojis, use them sparsly. Talk nicely and don't talk out of place,
+don't say shit that'll get me banned in hackclub either. Answer in 3-4 or even 1
+word if possible... don't use capital letters stay casual with the grammar. But
+remember if you @mention someone, you need to keep the id in capitals!
+Also remember ${BotId} is your id. The message sent by the user is in this format:
+<@UserId> I am a smart user, it also may be:
+<@UserId> <@YourId> I am a smart user, or
+<@YourId> I am a smart user, just don't tag the user with your id
+
+The user mentioned you rn with this message: `
 
 // const SChannelID = 'C0ALRF7MH5H'; // bot spam channel (privated)
 // ChannelID = SChannelID;
@@ -525,6 +547,50 @@ app.action("join_ankush_channel_from_home", async ({ body, client, ack, respond 
     channel: presser,
     text: `You have successfully been added to <@${AnkushID}>'s channel <#${ChannelID}>! By...oh it was your own decision! Congrats! I hope you have a good time in my channel!`
   })
+});
+
+app.event("app_mention", async ({ event, say }) => {
+  try {
+    const text = event.text.toLowerCase().trim()
+
+    if (text.includes("say hi")) {
+      await say("Hi!");
+      return
+    } else if (text.includes("meaning to life")) {
+      await say("icecream");
+      return
+    } else if (text.includes("where is ankush")) {
+      await say("probably staring at the sky thinking they'd fix his problems");
+      return
+    } else if (text.includes("what do you like")) {
+      await say("i like to make people's day, even if it means my demise");
+      return
+    } else if (text.includes("like icecream")) {
+      await say("i do like other icecreams, but I'd rather not eat them, because that'd be called cannibalism and it is rather frowned upon in many societies");
+      return
+    } else if (text.includes("boss")) {
+      await say("ankush thinks he's the boss but we all know who runs the channel");
+      return
+    } else if (text.includes("alive")) {
+      await say("i am still kicking it");
+      return
+    }
+
+    if (event.channel !== ChannelID) {
+      return
+    }
+
+    const interaction = await ai.interactions.create({
+      model: model,
+      input: preText + text,
+    });
+
+    console.log(interaction.output_text);
+    await say(interaction.output_text)
+
+  } catch (err) {
+    console.log("Appmention error: ", err.message)
+  }
 });
 
 // ****************************************
